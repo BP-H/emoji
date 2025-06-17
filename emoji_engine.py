@@ -61,7 +61,7 @@ RULES:
 - Every remix must add to the original content.
 - Every constructive fork = a new universe. Every universe = a new root.
   Every root always links to the global meta-verse.
-- Forks can be implemented in UE5, Unity, or anything — hooks are already there.
+- Forks can be implemented in UE5, Unity, Robots or anything, hooks are already there.
   What you build on it is up to you! ☺️
 
 Together, we form a distributed multiverse of metaverses. 🌱🌐💫
