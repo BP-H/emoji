@@ -33,6 +33,10 @@ Concurrency:
 - Critical operations acquire multiple locks safely via sorted lock order
 - Logchain uses single writer thread for audit consistency
 
+- Every for must improve one tiny thing
+- Every remix must add to the OC
+
+
 """
 
 import sys
