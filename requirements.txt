@@ -3,3 +3,5 @@
 fastapi[all]
 apscheduler
 python-dotenv
+fastapi
+uvicorn[standard]
