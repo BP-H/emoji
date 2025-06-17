@@ -1646,203 +1646,522 @@ class RemixAgent:
 
 
 
-# Simple CLI interface for MetaKarma Hub
+
+
+
+
+
+
+
+
+
+
+
+# Complete CLI interface for MetaKarma Hub
 # Add this to the bottom of your metakarma.py file
 
-def main():
-    """Simple command-line interface for MetaKarma Hub"""
-    agent = RemixAgent()
+import cmd
+import json
+from typing import Optional
+
+class MetaKarmaCLI(cmd.Cmd):
+    """Complete command-line interface for MetaKarma Hub"""
     
-    print("🚀 MetaKarma Hub v5.28.11 Started!")
-    print("Commands: add_user, mint, react, status, save, help, quit")
+    intro = """
+🚀 MetaKarma Hub v5.28.11 - Complete Interface
+Type 'help' or '?' for commands, 'help <command>' for details
+Type 'quit' to exit and save
+"""
+    prompt = '🎭 > '
     
-    while True:
+    def __init__(self):
+        super().__init__()
+        self.agent = RemixAgent()
+        print(self.intro)
+    
+    def do_quit(self, arg):
+        """Exit and save state"""
+        self.agent.save_snapshot()
+        print("👋 Goodbye! State saved.")
+        return True
+    
+    def do_exit(self, arg):
+        """Exit and save state"""
+        return self.do_quit(arg)
+    
+    # === USER MANAGEMENT ===
+    
+    def do_add_user(self, arg):
+        """Add new user: add_user <username> [genesis] [species]"""
+        parts = arg.split()
+        if not parts:
+            print("Usage: add_user <username> [genesis] [species]")
+            return
+        
+        username = parts[0]
+        is_genesis = len(parts) > 1 and parts[1].lower() == "genesis"
+        species = parts[2] if len(parts) > 2 else "human"
+        
         try:
-            cmd = input("\n> ").strip().lower()
-            
-            if cmd == "quit" or cmd == "exit":
-                agent.save_snapshot()
-                print("Goodbye! 👋")
-                break
-                
-            elif cmd == "help":
-                print("""
-Commands:
-  add_user <name> [genesis]  - Add new user (genesis=True for founder)
-  mint <user> <improvement>  - Create content with improvement
-  react <user> <coin_id> <emoji> - React to content  
-  status [user]              - Show user/system status
-  list_coins [user]          - List coins
-  save                       - Save current state
-  help                       - Show this help
-  quit                       - Exit and save
-                """)
-                
-            elif cmd.startswith("add_user"):
-                parts = cmd.split()
-                if len(parts) < 2:
-                    print("Usage: add_user <name> [genesis]")
-                    continue
-                    
-                username = parts[1]
-                is_genesis = len(parts) > 2 and parts[2].lower() == "genesis"
-                
-                try:
-                    agent.add_user(username, is_genesis=is_genesis)
-                    print(f"✅ User '{username}' added!" + (" (Genesis user)" if is_genesis else ""))
-                except Exception as e:
-                    print(f"❌ Error: {e}")
-                    
-            elif cmd.startswith("mint"):
-                parts = cmd.split(maxsplit=2)
-                if len(parts) < 3:
-                    print("Usage: mint <user> <improvement_text>")
-                    continue
-                    
-                username = parts[1]
-                improvement = parts[2]
-                
-                try:
-                    result = agent.mint_content(username, improvement)
-                    print(f"✅ Content minted! Coin ID: {result['coin_id']}")
-                    print(f"   Value: {result['value']}")
-                except Exception as e:
-                    print(f"❌ Error: {e}")
-                    
-            elif cmd.startswith("react"):
-                parts = cmd.split()
-                if len(parts) < 4:
-                    print("Usage: react <user> <coin_id> <emoji>")
-                    print("Available emojis: 🤗 🥰 😍 🔥 💎 🚀 👍 ❤️")
-                    continue
-                    
-                username = parts[1]
-                coin_id = parts[2]
-                emoji = parts[3]
-                
-                try:
-                    agent.react_to_content(username, coin_id, emoji)
-                    print(f"✅ {username} reacted with {emoji}!")
-                except Exception as e:
-                    print(f"❌ Error: {e}")
-                    
-            elif cmd.startswith("status"):
-                parts = cmd.split()
-                if len(parts) > 1:
-                    username = parts[1]
-                    user = agent.users.get(username)
-                    if user:
-                        print(f"👤 User: {username}")
-                        print(f"   Karma: {user.karma}")
-                        print(f"   Coins owned: {len(user.coins_owned)}")
-                        print(f"   Genesis: {user.is_genesis}")
-                        print(f"   Join date: {user.join_time.strftime('%Y-%m-%d')}")
-                    else:
-                        print(f"❌ User '{username}' not found")
-                else:
-                    print(f"📊 System Status:")
-                    print(f"   Users: {len(agent.users)}")
-                    print(f"   Coins: {len(agent.coins)}")
-                    print(f"   Treasury: {agent.treasury}")
-                    print(f"   Proposals: {len(agent.proposals)}")
-                    
-            elif cmd.startswith("list_coins"):
-                parts = cmd.split()
-                if len(parts) > 1:
-                    username = parts[1]
-                    user = agent.users.get(username)
-                    if user:
-                        print(f"💰 Coins owned by {username}:")
-                        for coin_id in user.coins_owned:
-                            coin = agent.coins.get(coin_id)
-                            if coin:
-                                print(f"   {coin_id[:8]}... Value: {coin.value} {'(Root)' if coin.is_root else ''}")
-                    else:
-                        print(f"❌ User '{username}' not found")
-                else:
-                    print("💰 All coins:")
-                    for coin_id, coin in agent.coins.items():
-                        print(f"   {coin_id[:8]}... Owner: {coin.owner} Value: {coin.value}")
-                        
-            elif cmd == "save":
-                agent.save_snapshot()
-                print("💾 State saved!")
-                
-            else:
-                print("❌ Unknown command. Type 'help' for available commands.")
-                
-        except KeyboardInterrupt:
-            agent.save_snapshot()
-            print("\n👋 Goodbye!")
-            break
+            self._add_user(username, is_genesis, species)
+            status = " (Genesis)" if is_genesis else ""
+            print(f"✅ User '{username}' added{status} as {species}")
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
-
-# Helper methods to add to the RemixAgent class
-def add_user_simple(agent, username, is_genesis=False):
-    """Simplified user addition"""
-    event = {
-        "event": "ADD_USER",
-        "user": username,
-        "is_genesis": is_genesis,
-        "species": "human",
-        "karma": str(Config.GENESIS_KARMA_BONUS if is_genesis else 0),
-        "join_time": ts(),
-        "last_active": ts(),
-        "root_coin_id": str(uuid.uuid4()),
-        "coins_owned": [],
-        "initial_root_value": str(Config.ROOT_COIN_INITIAL_VALUE),
-        "consent": True,
-        "root_coin_value": str(Config.ROOT_COIN_INITIAL_VALUE)
-    }
-    agent._process_event(event)
-
-def mint_content_simple(agent, username, improvement_text):
-    """Simplified content minting"""
-    user = agent.users.get(username)
-    if not user:
-        raise Exception(f"User {username} not found")
+            print(f"❌ Error: {e}")
     
-    if len(improvement_text) < Config.MIN_IMPROVEMENT_LEN:
-        raise Exception(f"Improvement must be at least {Config.MIN_IMPROVEMENT_LEN} characters")
+    def do_users(self, arg):
+        """List all users with details"""
+        if not self.agent.users:
+            print("No users found")
+            return
+        
+        print(f"\n👥 Users ({len(self.agent.users)}):")
+        print("-" * 80)
+        for name, user in self.agent.users.items():
+            genesis = "🌟" if user.is_genesis else "  "
+            print(f"{genesis} {name:<15} Karma: {user.karma:<10} Coins: {len(user.coins_owned):<3} Species: {user.species}")
     
-    coin_id = str(uuid.uuid4())
-    mint_value = min(user.next_mint_threshold, Config.ROOT_COIN_INITIAL_VALUE * Config.MAX_FRACTION_START)
+    def do_user(self, arg):
+        """Show detailed user info: user <username>"""
+        if not arg:
+            print("Usage: user <username>")
+            return
+        
+        user = self.agent.users.get(arg)
+        if not user:
+            print(f"❌ User '{arg}' not found")
+            return
+        
+        print(f"\n👤 User: {user.name}")
+        print(f"   Karma: {user.karma}")
+        print(f"   Species: {user.species}")
+        print(f"   Genesis: {'Yes' if user.is_genesis else 'No'}")
+        print(f"   Joined: {user.join_time.strftime('%Y-%m-%d %H:%M')}")
+        print(f"   Last Active: {user.last_active.strftime('%Y-%m-%d %H:%M')}")
+        print(f"   Coins Owned: {len(user.coins_owned)}")
+        print(f"   Mint Count: {user.mint_count}")
+        print(f"   Influencer Score: {user.influencer_score}")
+        
+        if user.root_coin_id:
+            root_coin = self.agent.coins.get(user.root_coin_id)
+            if root_coin:
+                print(f"   Root Coin Value: {root_coin.value}")
     
-    event = {
-        "event": "MINT",
-        "user": username,
-        "coin_id": coin_id,
-        "value": str(mint_value),
-        "root_coin_id": user.root_coin_id,
-        "genesis_creator": user.name if user.is_genesis else None,
-        "references": [],
-        "improvement": improvement_text,
-        "fractional_pct": str((mint_value / Config.ROOT_COIN_INITIAL_VALUE) * 100),
-        "ancestors": [],
-        "timestamp": ts(),
-        "is_remix": False
-    }
-    agent._process_event(event)
-    return {"coin_id": coin_id, "value": mint_value}
+    # === CONTENT CREATION ===
+    
+    def do_mint(self, arg):
+        """Create content: mint <username> <improvement_text>"""
+        parts = arg.split(maxsplit=1)
+        if len(parts) < 2:
+            print("Usage: mint <username> <improvement_text>")
+            return
+        
+        username, improvement = parts
+        try:
+            result = self._mint_content(username, improvement)
+            print(f"✅ Content minted!")
+            print(f"   Coin ID: {result['coin_id']}")
+            print(f"   Value: {result['value']}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_remix(self, arg):
+        """Create remix: remix <username> <original_coin_id> <improvement_text>"""
+        parts = arg.split(maxsplit=2)
+        if len(parts) < 3:
+            print("Usage: remix <username> <original_coin_id> <improvement_text>")
+            return
+        
+        username, original_coin_id, improvement = parts
+        try:
+            result = self._mint_remix(username, original_coin_id, improvement)
+            print(f"✅ Remix created!")
+            print(f"   Coin ID: {result['coin_id']}")
+            print(f"   Value: {result['value']}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_react(self, arg):
+        """React to content: react <username> <coin_id> <emoji> [message]"""
+        parts = arg.split(maxsplit=3)
+        if len(parts) < 3:
+            print("Usage: react <username> <coin_id> <emoji> [message]")
+            print("Available emojis: 🤗 🥰 😍 🔥 💎 🚀 👍 ❤️ 🌟 ⚡ 🎉 ✨")
+            return
+        
+        username, coin_id, emoji = parts[:3]
+        message = parts[3] if len(parts) > 3 else ""
+        
+        try:
+            self._react_to_content(username, coin_id, emoji, message)
+            print(f"✅ {username} reacted with {emoji}!")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    # === COIN MANAGEMENT ===
+    
+    def do_coins(self, arg):
+        """List coins: coins [username] [--detailed]"""
+        parts = arg.split()
+        username = parts[0] if parts and not parts[0].startswith('--') else None
+        detailed = '--detailed' in parts
+        
+        if username:
+            user = self.agent.users.get(username)
+            if not user:
+                print(f"❌ User '{username}' not found")
+                return
+            coins_to_show = [(cid, self.agent.coins[cid]) for cid in user.coins_owned if cid in self.agent.coins]
+            print(f"\n💰 Coins owned by {username}:")
+        else:
+            coins_to_show = list(self.agent.coins.items())
+            print(f"\n💰 All coins ({len(coins_to_show)}):")
+        
+        if not coins_to_show:
+            print("No coins found")
+            return
+        
+        print("-" * 100)
+        for coin_id, coin in coins_to_show:
+            root_indicator = "🌳" if coin.is_root else "🍃"
+            remix_indicator = "🔄" if coin.is_remix else "  "
+            print(f"{root_indicator}{remix_indicator} {coin_id[:12]}... Owner: {coin.owner:<12} Value: {coin.value:<12} Creator: {coin.creator}")
+            
+            if detailed:
+                print(f"     Created: {coin.created_at}")
+                print(f"     Improvement: {coin.improvement[:50]}{'...' if len(coin.improvement) > 50 else ''}")
+                print(f"     Reactions: {len(coin.reactions)}")
+                if coin.references:
+                    print(f"     References: {len(coin.references)}")
+                print()
+    
+    def do_coin(self, arg):
+        """Show detailed coin info: coin <coin_id>"""
+        if not arg:
+            print("Usage: coin <coin_id>")
+            return
+        
+        coin = self.agent.coins.get(arg)
+        if not coin:
+            print(f"❌ Coin '{arg}' not found")
+            return
+        
+        print(f"\n💰 Coin: {coin.coin_id}")
+        print(f"   Owner: {coin.owner}")
+        print(f"   Creator: {coin.creator}")
+        print(f"   Value: {coin.value}")
+        print(f"   Type: {'Root' if coin.is_root else 'Fractional'} {'Remix' if coin.is_remix else ''}")
+        print(f"   Created: {coin.created_at}")
+        print(f"   Genesis Creator: {coin.genesis_creator}")
+        
+        if coin.improvement:
+            print(f"   Improvement: {coin.improvement}")
+        
+        if coin.fractional_of:
+            print(f"   Fractional of: {coin.fractional_of}")
+            print(f"   Percentage: {coin.fractional_pct}%")
+        
+        if coin.references:
+            print(f"   References ({len(coin.references)}):")
+            for ref in coin.references[:3]:
+                print(f"     - {ref.get('coin_id', 'Unknown')}")
+        
+        if coin.reactions:
+            print(f"   Reactions ({len(coin.reactions)}):")
+            for reaction in coin.reactions[-5:]:  # Show last 5
+                print(f"     {reaction['emoji']} by {reaction['reactor']} - {reaction.get('message', '')}")
+    
+    # === MARKETPLACE ===
+    
+    def do_list_for_sale(self, arg):
+        """List coin for sale: list_for_sale <coin_id> <price>"""
+        parts = arg.split()
+        if len(parts) != 2:
+            print("Usage: list_for_sale <coin_id> <price>")
+            return
+        
+        coin_id, price_str = parts
+        try:
+            price = Decimal(price_str)
+            listing_id = str(uuid.uuid4())
+            
+            coin = self.agent.coins.get(coin_id)
+            if not coin:
+                print(f"❌ Coin '{coin_id}' not found")
+                return
+            
+            event = {
+                "event": "MARKETPLACE_LIST",
+                "listing_id": listing_id,
+                "coin_id": coin_id,
+                "seller": coin.owner,
+                "price": str(price),
+                "timestamp": ts()
+            }
+            self.agent._process_event(event)
+            print(f"✅ Coin listed for sale at price {price}")
+            print(f"   Listing ID: {listing_id}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_marketplace(self, arg):
+        """Show marketplace listings"""
+        if not self.agent.marketplace_listings:
+            print("No items for sale")
+            return
+        
+        print(f"\n🛒 Marketplace ({len(self.agent.marketplace_listings)} listings):")
+        print("-" * 80)
+        for listing_id, listing in self.agent.marketplace_listings.items():
+            coin = self.agent.coins.get(listing.coin_id)
+            coin_info = f"{coin.coin_id[:12]}..." if coin else "Unknown"
+            print(f"💰 {coin_info} Price: {listing.price} Seller: {listing.seller}")
+            print(f"   Listing ID: {listing_id}")
+    
+    def do_buy(self, arg):
+        """Buy from marketplace: buy <listing_id> <buyer_username>"""
+        parts = arg.split()
+        if len(parts) != 2:
+            print("Usage: buy <listing_id> <buyer_username>")
+            return
+        
+        listing_id, buyer = parts
+        try:
+            event = {
+                "event": "MARKETPLACE_BUY",
+                "listing_id": listing_id,
+                "buyer": buyer,
+                "timestamp": ts()
+            }
+            self.agent._process_event(event)
+            print(f"✅ Purchase completed!")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    # === GOVERNANCE ===
+    
+    def do_propose(self, arg):
+        """Create proposal: propose <creator> <target> <description>"""
+        parts = arg.split(maxsplit=2)
+        if len(parts) < 3:
+            print("Usage: propose <creator> <target> <description>")
+            return
+        
+        creator, target, description = parts
+        try:
+            proposal_id = str(uuid.uuid4())
+            event = {
+                "event": "CREATE_PROPOSAL",
+                "proposal_id": proposal_id,
+                "creator": creator,
+                "description": description,
+                "target": target,
+                "payload": {},
+                "timestamp": ts()
+            }
+            self.agent._process_event(event)
+            print(f"✅ Proposal created!")
+            print(f"   Proposal ID: {proposal_id}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_vote(self, arg):
+        """Vote on proposal: vote <proposal_id> <voter> <yes/no>"""
+        parts = arg.split()
+        if len(parts) != 3 or parts[2] not in ('yes', 'no'):
+            print("Usage: vote <proposal_id> <voter> <yes/no>")
+            return
+        
+        proposal_id, voter, vote = parts
+        try:
+            event = {
+                "event": "VOTE_PROPOSAL",
+                "proposal_id": proposal_id,
+                "voter": voter,
+                "vote": vote,
+                "timestamp": ts()
+            }
+            self.agent._process_event(event)
+            print(f"✅ Vote recorded: {voter} voted {vote}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_proposals(self, arg):
+        """List all proposals"""
+        if not self.agent.proposals:
+            print("No proposals found")
+            return
+        
+        print(f"\n📋 Proposals ({len(self.agent.proposals)}):")
+        print("-" * 80)
+        for pid, proposal in self.agent.proposals.items():
+            votes_count = len(proposal.votes)
+            print(f"📜 {pid[:12]}... by {proposal.creator}")
+            print(f"   Status: {proposal.status} | Votes: {votes_count} | Target: {proposal.target}")
+            print(f"   Description: {proposal.description[:60]}{'...' if len(proposal.description) > 60 else ''}")
+            print()
+    
+    # === KARMA & TREASURY ===
+    
+    def do_adjust_karma(self, arg):
+        """Adjust user karma: adjust_karma <username> <change>"""
+        parts = arg.split()
+        if len(parts) != 2:
+            print("Usage: adjust_karma <username> <change>")
+            return
+        
+        username, change_str = parts
+        try:
+            event = {
+                "event": "ADJUST_KARMA",
+                "user": username,
+                "change": change_str,
+                "timestamp": ts()
+            }
+            self.agent._process_event(event)
+            print(f"✅ Karma adjusted for {username} by {change_str}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    def do_treasury(self, arg):
+        """Show treasury status"""
+        print(f"\n🏛️  Treasury Status:")
+        print(f"   Total: {self.agent.treasury}")
+        print(f"   Active Fund: {self.agent.treasury_active_fund}")
+    
+    def do_emojis(self, arg):
+        """Show emoji market weights"""
+        print(f"\n😀 Emoji Market:")
+        print("-" * 40)
+        for emoji, data in self.agent.emoji_market.market.items():
+            print(f"{emoji} Weight: {data['weight']:<8} Uses: {data['uses']}")
+    
+    # === SYSTEM ===
+    
+    def do_status(self, arg):
+        """Show system status"""
+        print(f"\n📊 System Status:")
+        print(f"   Users: {len(self.agent.users)}")
+        print(f"   Coins: {len(self.agent.coins)}")
+        print(f"   Proposals: {len(self.agent.proposals)}")
+        print(f"   Marketplace Listings: {len(self.agent.marketplace_listings)}")
+        print(f"   Treasury: {self.agent.treasury}")
+        print(f"   Logchain Entries: {len(self.agent.logchain.entries)}")
+    
+    def do_save(self, arg):
+        """Save current state"""
+        self.agent.save_snapshot()
+        print("💾 State saved!")
+    
+    def do_verify(self, arg):
+        """Verify logchain integrity"""
+        if self.agent.logchain.verify():
+            print("✅ Logchain integrity verified")
+        else:
+            print("❌ Logchain integrity check failed")
+    
+    # === HELPER METHODS ===
+    
+    def _add_user(self, username, is_genesis=False, species="human"):
+        """Helper to add user"""
+        event = {
+            "event": "ADD_USER",
+            "user": username,
+            "is_genesis": is_genesis,
+            "species": species,
+            "karma": str(Config.GENESIS_KARMA_BONUS if is_genesis else 0),
+            "join_time": ts(),
+            "last_active": ts(),
+            "root_coin_id": str(uuid.uuid4()),
+            "coins_owned": [],
+            "initial_root_value": str(Config.ROOT_COIN_INITIAL_VALUE),
+            "consent": True,
+            "root_coin_value": str(Config.ROOT_COIN_INITIAL_VALUE)
+        }
+        self.agent._process_event(event)
+    
+    def _mint_content(self, username, improvement_text):
+        """Helper to mint content"""
+        user = self.agent.users.get(username)
+        if not user:
+            raise Exception(f"User {username} not found")
+        
+        if len(improvement_text) < Config.MIN_IMPROVEMENT_LEN:
+            raise Exception(f"Improvement must be at least {Config.MIN_IMPROVEMENT_LEN} characters")
+        
+        coin_id = str(uuid.uuid4())
+        mint_value = min(user.next_mint_threshold, Config.ROOT_COIN_INITIAL_VALUE * Config.MAX_FRACTION_START)
+        
+        event = {
+            "event": "MINT",
+            "user": username,
+            "coin_id": coin_id,
+            "value": str(mint_value),
+            "root_coin_id": user.root_coin_id,
+            "genesis_creator": user.name if user.is_genesis else None,
+            "references": [],
+            "improvement": improvement_text,
+            "fractional_pct": str((mint_value / Config.ROOT_COIN_INITIAL_VALUE) * 100),
+            "ancestors": [],
+            "timestamp": ts(),
+            "is_remix": False
+        }
+        self.agent._process_event(event)
+        return {"coin_id": coin_id, "value": mint_value}
+    
+    def _mint_remix(self, username, original_coin_id, improvement_text):
+        """Helper to mint remix"""
+        user = self.agent.users.get(username)
+        original_coin = self.agent.coins.get(original_coin_id)
+        
+        if not user or not original_coin:
+            raise Exception("User or original coin not found")
+        
+        if len(improvement_text) < Config.MIN_IMPROVEMENT_LEN:
+            raise Exception(f"Improvement must be at least {Config.MIN_IMPROVEMENT_LEN} characters")
+        
+        coin_id = str(uuid.uuid4())
+        mint_value = min(user.next_mint_threshold, Config.ROOT_COIN_INITIAL_VALUE * Config.MAX_FRACTION_START)
+        
+        event = {
+            "event": "MINT",
+            "user": username,
+            "coin_id": coin_id,
+            "value": str(mint_value),
+            "root_coin_id": user.root_coin_id,
+            "genesis_creator": original_coin.genesis_creator,
+            "references": [{"coin_id": original_coin_id}],
+            "improvement": improvement_text,
+            "fractional_pct": str((mint_value / Config.ROOT_COIN_INITIAL_VALUE) * 100),
+            "ancestors": original_coin.ancestors + [original_coin_id],
+            "timestamp": ts(),
+            "is_remix": True
+        }
+        self.agent._process_event(event)
+        return {"coin_id": coin_id, "value": mint_value}
+    
+    def _react_to_content(self, username, coin_id, emoji, message=""):
+        """Helper to react to content"""
+        event = {
+            "event": "REACT",
+            "reactor": username,
+            "coin": coin_id,
+            "emoji": emoji,
+            "message": message,
+            "timestamp": ts(),
+            "reaction_type": "react"
+        }
+        self.agent._process_event(event)
 
-def react_to_content_simple(agent, username, coin_id, emoji):
-    """Simplified reaction"""
-    event = {
-        "event": "REACT",
-        "reactor": username,
-        "coin": coin_id,
-        "emoji": emoji,
-        "message": "",
-        "timestamp": ts(),
-        "reaction_type": "react"
-    }
-    agent._process_event(event)
-
-# Monkey patch methods onto RemixAgent
-RemixAgent.add_user = add_user_simple
-RemixAgent.mint_content = mint_content_simple  
-RemixAgent.react_to_content = react_to_content_simple
+def main():
+    """Run the complete MetaKarma CLI"""
+    try:
+        cli = MetaKarmaCLI()
+        cli.cmdloop()
+    except KeyboardInterrupt:
+        print("\n👋 Goodbye!")
+    except Exception as e:
+        print(f"💥 Fatal error: {e}")
 
 if __name__ == "__main__":
     main()
