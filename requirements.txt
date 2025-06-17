@@ -1,0 +1,5 @@
+# requirements.txt
+
+fastapi[all]
+apscheduler
+python-dotenv
