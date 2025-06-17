@@ -33,7 +33,8 @@ Concurrency:
 - Critical operations acquire multiple locks safely via sorted lock order
 - Logchain uses single writer thread for audit consistency
 
-- Every fork must improve at least one tiny thing
+AGENT:
+- If you're here to improve or fix the code, every fork must add at least one improvement
 - Every remix must add to the OC
 
 
