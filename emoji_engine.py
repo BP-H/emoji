@@ -1642,3 +1642,207 @@ class RemixAgent:
 
 # End of MetaKarma Hub Ultimate Mega-Agent v5.28.11 FULL BLOWN
 # Ready to launch remix universes, scalable & robust.
+
+
+
+
+# Simple CLI interface for MetaKarma Hub
+# Add this to the bottom of your metakarma.py file
+
+def main():
+    """Simple command-line interface for MetaKarma Hub"""
+    agent = RemixAgent()
+    
+    print("🚀 MetaKarma Hub v5.28.11 Started!")
+    print("Commands: add_user, mint, react, status, save, help, quit")
+    
+    while True:
+        try:
+            cmd = input("\n> ").strip().lower()
+            
+            if cmd == "quit" or cmd == "exit":
+                agent.save_snapshot()
+                print("Goodbye! 👋")
+                break
+                
+            elif cmd == "help":
+                print("""
+Commands:
+  add_user <name> [genesis]  - Add new user (genesis=True for founder)
+  mint <user> <improvement>  - Create content with improvement
+  react <user> <coin_id> <emoji> - React to content  
+  status [user]              - Show user/system status
+  list_coins [user]          - List coins
+  save                       - Save current state
+  help                       - Show this help
+  quit                       - Exit and save
+                """)
+                
+            elif cmd.startswith("add_user"):
+                parts = cmd.split()
+                if len(parts) < 2:
+                    print("Usage: add_user <name> [genesis]")
+                    continue
+                    
+                username = parts[1]
+                is_genesis = len(parts) > 2 and parts[2].lower() == "genesis"
+                
+                try:
+                    agent.add_user(username, is_genesis=is_genesis)
+                    print(f"✅ User '{username}' added!" + (" (Genesis user)" if is_genesis else ""))
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    
+            elif cmd.startswith("mint"):
+                parts = cmd.split(maxsplit=2)
+                if len(parts) < 3:
+                    print("Usage: mint <user> <improvement_text>")
+                    continue
+                    
+                username = parts[1]
+                improvement = parts[2]
+                
+                try:
+                    result = agent.mint_content(username, improvement)
+                    print(f"✅ Content minted! Coin ID: {result['coin_id']}")
+                    print(f"   Value: {result['value']}")
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    
+            elif cmd.startswith("react"):
+                parts = cmd.split()
+                if len(parts) < 4:
+                    print("Usage: react <user> <coin_id> <emoji>")
+                    print("Available emojis: 🤗 🥰 😍 🔥 💎 🚀 👍 ❤️")
+                    continue
+                    
+                username = parts[1]
+                coin_id = parts[2]
+                emoji = parts[3]
+                
+                try:
+                    agent.react_to_content(username, coin_id, emoji)
+                    print(f"✅ {username} reacted with {emoji}!")
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    
+            elif cmd.startswith("status"):
+                parts = cmd.split()
+                if len(parts) > 1:
+                    username = parts[1]
+                    user = agent.users.get(username)
+                    if user:
+                        print(f"👤 User: {username}")
+                        print(f"   Karma: {user.karma}")
+                        print(f"   Coins owned: {len(user.coins_owned)}")
+                        print(f"   Genesis: {user.is_genesis}")
+                        print(f"   Join date: {user.join_time.strftime('%Y-%m-%d')}")
+                    else:
+                        print(f"❌ User '{username}' not found")
+                else:
+                    print(f"📊 System Status:")
+                    print(f"   Users: {len(agent.users)}")
+                    print(f"   Coins: {len(agent.coins)}")
+                    print(f"   Treasury: {agent.treasury}")
+                    print(f"   Proposals: {len(agent.proposals)}")
+                    
+            elif cmd.startswith("list_coins"):
+                parts = cmd.split()
+                if len(parts) > 1:
+                    username = parts[1]
+                    user = agent.users.get(username)
+                    if user:
+                        print(f"💰 Coins owned by {username}:")
+                        for coin_id in user.coins_owned:
+                            coin = agent.coins.get(coin_id)
+                            if coin:
+                                print(f"   {coin_id[:8]}... Value: {coin.value} {'(Root)' if coin.is_root else ''}")
+                    else:
+                        print(f"❌ User '{username}' not found")
+                else:
+                    print("💰 All coins:")
+                    for coin_id, coin in agent.coins.items():
+                        print(f"   {coin_id[:8]}... Owner: {coin.owner} Value: {coin.value}")
+                        
+            elif cmd == "save":
+                agent.save_snapshot()
+                print("💾 State saved!")
+                
+            else:
+                print("❌ Unknown command. Type 'help' for available commands.")
+                
+        except KeyboardInterrupt:
+            agent.save_snapshot()
+            print("\n👋 Goodbye!")
+            break
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+
+# Helper methods to add to the RemixAgent class
+def add_user_simple(agent, username, is_genesis=False):
+    """Simplified user addition"""
+    event = {
+        "event": "ADD_USER",
+        "user": username,
+        "is_genesis": is_genesis,
+        "species": "human",
+        "karma": str(Config.GENESIS_KARMA_BONUS if is_genesis else 0),
+        "join_time": ts(),
+        "last_active": ts(),
+        "root_coin_id": str(uuid.uuid4()),
+        "coins_owned": [],
+        "initial_root_value": str(Config.ROOT_COIN_INITIAL_VALUE),
+        "consent": True,
+        "root_coin_value": str(Config.ROOT_COIN_INITIAL_VALUE)
+    }
+    agent._process_event(event)
+
+def mint_content_simple(agent, username, improvement_text):
+    """Simplified content minting"""
+    user = agent.users.get(username)
+    if not user:
+        raise Exception(f"User {username} not found")
+    
+    if len(improvement_text) < Config.MIN_IMPROVEMENT_LEN:
+        raise Exception(f"Improvement must be at least {Config.MIN_IMPROVEMENT_LEN} characters")
+    
+    coin_id = str(uuid.uuid4())
+    mint_value = min(user.next_mint_threshold, Config.ROOT_COIN_INITIAL_VALUE * Config.MAX_FRACTION_START)
+    
+    event = {
+        "event": "MINT",
+        "user": username,
+        "coin_id": coin_id,
+        "value": str(mint_value),
+        "root_coin_id": user.root_coin_id,
+        "genesis_creator": user.name if user.is_genesis else None,
+        "references": [],
+        "improvement": improvement_text,
+        "fractional_pct": str((mint_value / Config.ROOT_COIN_INITIAL_VALUE) * 100),
+        "ancestors": [],
+        "timestamp": ts(),
+        "is_remix": False
+    }
+    agent._process_event(event)
+    return {"coin_id": coin_id, "value": mint_value}
+
+def react_to_content_simple(agent, username, coin_id, emoji):
+    """Simplified reaction"""
+    event = {
+        "event": "REACT",
+        "reactor": username,
+        "coin": coin_id,
+        "emoji": emoji,
+        "message": "",
+        "timestamp": ts(),
+        "reaction_type": "react"
+    }
+    agent._process_event(event)
+
+# Monkey patch methods onto RemixAgent
+RemixAgent.add_user = add_user_simple
+RemixAgent.mint_content = mint_content_simple  
+RemixAgent.react_to_content = react_to_content_simple
+
+if __name__ == "__main__":
+    main()
