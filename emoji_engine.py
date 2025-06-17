@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
 # The Emoji Engine — MetaKarma Hub Ultimate Mega-Agent v5.28.11 FULL BLOWN
 #
-# Copyright (c) 2023-2026 mimi, taha & supernova
+# Copyright (c) 2023-2026 mimi, taha, supernova and accessAI tech llc
 #
 # Powered by humans & machines hand in hand — remixing creativity, karma & cosmos.
 # Special shoutout to Gemini, Google Gemini, OpenAI GPT & Anthropic Cloud
@@ -15,7 +15,8 @@ MetaKarma Hub v5.28.11 Full Version
 
 A fully modular, horizontally scalable, immutable, concurrency-safe remix ecosystem
 with unified root coin, karma-gated spending, advanced reaction rewards,
-and full governance + marketplace support.
+and full governance + marketplace support. The new legoblocks of the AI age for the Metaverse, 
+a safe opensourse co-creation space for species. 
 
 Economic Model Highlights:
 - Minting original content splits coin value 1/3 to creator, 1/3 treasury, 1/3 reactors
