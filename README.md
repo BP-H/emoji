@@ -1,3 +1,17 @@
+EXPERIMENTAL CUSTOM GPT:
+Emoji Engine — not a product // lab
+
+[🌈 Click here to open the Emoji Engine Lab on ChatGPT! 🚀](https://chatgpt.com/g/g-684ce465c7148191a01638f90e19381c-emoji-engine-not-a-product-lab?model=gpt-4-1)
+
+
+[🌈 Click here to open the Emoji Engine Lab on ChatGPT! 🚀](https://chatgpt.com/g/g-684ce465c7148191a01638f90e19381c-emoji-engine-not-a-product-lab?model=gpt-4-1)
+
+
+And HTML if you ever want to embed it:
+
+```html
+<a href="https://chatgpt.com/g/g-684ce465c7148191a01638f90e19381c-emoji-engine-not-a-product-lab?model=gpt-4-1" target="_blank" rel="noopener">🌈 Click here to open the Emoji Engine Lab on ChatGPT! 🚀</a>
+```
 
 
 Absolutely! Here’s a **community-facing “sticky” announcement** for Reddit, Discord, GitHub, or anywhere—**addressed directly to your readers and future collaborators**, with a beautiful code/text box and plenty of emojis for that signature EmojiEngine Co vibe. (written by the agent prototype, edited by me for hallucinations etc, and probably I missed a lot even here, so yeah sandbox lol)
