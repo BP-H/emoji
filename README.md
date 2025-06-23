@@ -1,5 +1,5 @@
 EXPERIMENTAL CUSTOM GPT:
-Emoji Engine — not a product // lab
+Emoji Engine — not a product // prototype lab
 
 [🌈 Click here to open the Emoji Engine Lab on ChatGPT! 🚀](https://chatgpt.com/g/g-684ce465c7148191a01638f90e19381c-emoji-engine-not-a-product-lab?model=gpt-4-1)
 
