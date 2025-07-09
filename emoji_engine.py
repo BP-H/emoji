@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
 # The Emoji Engine — MetaKarma Hub Ultimate Mega-Agent v5.28.11 FULL BLOWN
 #
-# Copyright (c) 2023-2026 mimi, taha, supernova and accessAI tech llc
+# Copyright (c) 2023-2026 mimi, taha, supernova, GLOBALRUNWAY and accessAI tech llc 
 #
 # Powered by humans & machines hand in hand — remixing creativity, karma & cosmos.
 # Special shoutout to OpenAI ChatGPT, Google Gemini & Anthropic Claude
